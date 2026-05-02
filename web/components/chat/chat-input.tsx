@@ -6,10 +6,10 @@ import { cn } from "@/lib/cn";
 
 const SUGGESTIONS = [
   "what is SOYL AI?",
-  "what's your tech stack?",
   "tell me about the hotel PMS",
   "why pgvector over pinecone?",
   "are you fundraising?",
+  "what's your tech stack?",
   "how do I get in touch?",
 ];
 
@@ -59,7 +59,7 @@ export function ChatInput({
               key={s}
               type="button"
               onClick={() => onSend(s)}
-              className="text-xs font-sans text-fg-muted bg-bg-elev border border-border hover:border-accent-deep hover:text-fg rounded-full px-3 py-1.5 transition-colors"
+              className="text-[12px] font-mono text-fg-muted bg-bg-soft border border-border hover:border-accent-deep hover:text-fg hover:bg-bg-elev rounded-full px-3.5 py-1.5 transition-all"
             >
               {s}
             </button>
@@ -69,8 +69,7 @@ export function ChatInput({
 
       <div
         className={cn(
-          "relative flex items-end gap-2 bg-bg-elev border border-border rounded-md px-3 py-2.5 transition-colors",
-          "focus-within:border-accent-deep"
+          "relative flex items-end gap-2 bg-bg-elev border border-border rounded-lg px-3 py-2.5 transition-all glow-ring"
         )}
       >
         <textarea
@@ -78,9 +77,9 @@ export function ChatInput({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="ask anything — stack, projects, fundraising, hiring…"
+          placeholder="ask about the stack, projects, the long game…"
           rows={1}
-          className="flex-1 resize-none bg-transparent text-fg placeholder:text-fg-muted/60 focus:outline-none font-sans text-base leading-relaxed py-1.5"
+          className="flex-1 resize-none bg-transparent text-fg placeholder:text-fg-subtle focus:outline-none font-sans text-base leading-relaxed py-1.5"
           disabled={isStreaming}
         />
         {isStreaming ? (
@@ -90,7 +89,7 @@ export function ChatInput({
             className="shrink-0 w-10 h-10 rounded-md bg-bg border border-border hover:border-danger flex items-center justify-center text-fg-muted hover:text-danger transition-colors"
             aria-label="Stop"
           >
-            <Square className="w-4 h-4" />
+            <Square className="w-3.5 h-3.5" />
           </button>
         ) : (
           <button
@@ -104,8 +103,8 @@ export function ChatInput({
           </button>
         )}
       </div>
-      <p className="mt-2 text-[10px] font-mono uppercase tracking-[0.2em] text-fg-muted/60">
-        enter to send · shift+enter for newline · grounded on Ryan&apos;s public knowledge base
+      <p className="mt-2 eyebrow opacity-60">
+        enter · send  ·  shift+enter · newline  ·  grounded on Ryan&apos;s public corpus
       </p>
     </div>
   );

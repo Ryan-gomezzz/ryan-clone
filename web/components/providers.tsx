@@ -24,7 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       "(prefers-reduced-motion: reduce)"
     ).matches;
     if (prefersReduced) {
-      document.documentElement.style.setProperty("--grain-opacity", "0.02");
+      document.documentElement.style.setProperty("--grain-opacity", "0.015");
     }
   }, []);
 

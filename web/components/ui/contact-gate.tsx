@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { Send } from "lucide-react";
 import { useChatStore } from "@/lib/store";
 import { submitContact } from "@/lib/api";
-import { Button } from "./button";
 
 export function ContactGate() {
   const sessionId = useChatStore((s) => s.sessionId);
@@ -34,31 +34,26 @@ export function ContactGate() {
   if (done) {
     return (
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="border border-border bg-bg-elev rounded-md p-6 text-center"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="surface p-10 text-center"
       >
-        <p className="font-editorial text-2xl mb-1">got it.</p>
+        <p className="font-editorial text-3xl mb-2">got it.</p>
         <p className="text-fg-muted text-sm">i&apos;ll email back within 24h.</p>
       </motion.div>
     );
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="border border-border bg-bg-elev rounded-md p-6 md:p-8"
-    >
-      <p className="font-mono text-xs uppercase tracking-[0.3em] text-fg-muted mb-3">
-        get in touch
-      </p>
-      <h3 className="font-editorial text-2xl md:text-3xl mb-1">
-        leave a note.
+    <form onSubmit={onSubmit} className="surface p-6 md:p-8">
+      <p className="eyebrow mb-3">leave a note</p>
+      <h3 className="font-editorial text-2xl md:text-3xl mb-1.5">
+        Or just <span className="italic-display text-accent">email</span> me.
       </h3>
-      <p className="text-fg-muted text-sm mb-6">
-        Email + a one-liner on what you&apos;re working on. I&apos;ll loop back
-        within 24h. For business, prefix the subject with{" "}
-        <span className="font-mono text-fg">[BIZ]</span>.
+      <p className="text-fg-muted text-sm mb-6 max-w-lg">
+        Email + a one-liner. I&apos;ll loop back within 24h. Prefix the subject
+        with <span className="font-mono text-fg">[BIZ]</span> if it&apos;s
+        commercial.
       </p>
 
       <div className="space-y-3">
@@ -67,7 +62,7 @@ export function ContactGate() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your.email@domain.com"
-          className="w-full bg-bg border border-border rounded px-4 py-3 text-fg placeholder:text-fg-muted/50 focus:outline-none focus:border-accent-deep transition-colors"
+          className="w-full bg-bg-elev border border-border rounded-md px-4 py-3 text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent transition-colors"
           required
         />
         <textarea
@@ -75,12 +70,17 @@ export function ContactGate() {
           onChange={(e) => setMessage(e.target.value)}
           placeholder="who you are, what you want to talk about"
           rows={3}
-          className="w-full bg-bg border border-border rounded px-4 py-3 text-fg placeholder:text-fg-muted/50 focus:outline-none focus:border-accent-deep transition-colors resize-none"
+          className="w-full bg-bg-elev border border-border rounded-md px-4 py-3 text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent transition-colors resize-none"
           required
         />
-        <Button type="submit" disabled={submitting} className="w-full md:w-auto">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hot text-bg disabled:opacity-40 px-5 py-2.5 rounded-md text-sm font-sans transition-all hover:shadow-[0_8px_32px_-12px_var(--accent)]"
+        >
           {submitting ? "sending…" : "send"}
-        </Button>
+          <Send className="w-3.5 h-3.5" />
+        </button>
       </div>
     </form>
   );

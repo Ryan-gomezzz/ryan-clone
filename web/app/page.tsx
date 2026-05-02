@@ -7,20 +7,28 @@ export default function HomePage() {
     <>
       <Hero />
 
-      <div className="thin-divider mx-6 md:mx-10" />
-
       <Chat />
 
-      <div className="thin-divider mx-6 md:mx-10" />
-
-      <section className="px-6 md:px-10 py-20 md:py-28 max-w-4xl mx-auto">
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-fg-muted mb-3">
-          contact
-        </p>
-        <h2 className="font-editorial-tight text-4xl md:text-6xl mb-10">
-          rather <span className="italic-display text-accent">email?</span>
-        </h2>
-        <ContactGate />
+      <section className="relative px-6 md:px-10 py-24 md:py-32 max-w-[1400px] mx-auto">
+        <div className="grid md:grid-cols-12 gap-10 md:gap-16">
+          <div className="md:col-span-4">
+            <p className="eyebrow mb-4">
+              <span className="num-tag mr-2">/02</span>
+              contact
+            </p>
+            <h2 className="font-editorial-tight text-4xl md:text-5xl mb-6">
+              Prefer the <span className="italic-display text-accent">long form?</span>
+            </h2>
+            <p className="text-fg-muted text-[15px] leading-relaxed max-w-sm">
+              The clone&apos;s great for quick context. For anything serious —
+              business, collaboration, hiring — drop a real email and I&apos;ll
+              come back to you personally within 24h.
+            </p>
+          </div>
+          <div className="md:col-span-8">
+            <ContactGate />
+          </div>
+        </div>
       </section>
 
       <Footer />
@@ -30,23 +38,32 @@ export default function HomePage() {
 
 function Footer() {
   return (
-    <footer className="px-6 md:px-10 py-12 border-t border-border text-fg-muted text-xs font-mono uppercase tracking-[0.25em]">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>© Ryan Gomez · {new Date().getFullYear()}</div>
-        <div className="flex gap-6">
+    <footer className="px-6 md:px-10 py-12 border-t border-border">
+      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="flex items-baseline gap-3">
+          <span className="font-editorial text-base text-fg">Ryan Gomez</span>
+          <span className="eyebrow opacity-60">© {new Date().getFullYear()} · all rights reserved</span>
+        </div>
+        <div className="flex gap-8">
           <a
             href="https://github.com/Ryan-gomezzz"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-accent transition-colors"
+            className="link-underline text-sm text-fg-muted"
           >
-            GitHub
+            github
           </a>
-          <a href="/projects" className="hover:text-accent transition-colors">
-            Work
+          <a href="/projects" className="link-underline text-sm text-fg-muted">
+            work
           </a>
-          <a href="/voice" className="hover:text-accent transition-colors">
-            Voice
+          <a href="/voice" className="link-underline text-sm text-fg-muted">
+            voice
+          </a>
+          <a
+            href="mailto:ryangomez9965@gmail.com"
+            className="link-underline text-sm text-fg-muted"
+          >
+            email
           </a>
         </div>
       </div>

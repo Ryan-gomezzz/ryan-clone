@@ -124,56 +124,100 @@ export function Chat() {
   return (
     <section
       id="chat"
-      className="relative px-6 md:px-10 py-20 md:py-28 max-w-4xl mx-auto"
+      className="relative px-6 md:px-10 py-24 md:py-32 max-w-[1400px] mx-auto"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
-        className="mb-10"
-      >
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-fg-muted mb-3">
-          chat
-        </p>
-        <h2 className="font-editorial-tight text-4xl md:text-6xl">
-          ask <span className="italic-display text-accent">me</span> anything
-        </h2>
-        <p className="mt-4 max-w-xl text-fg-muted">
-          The replies are streamed from a Claude-backed persona, grounded on a
-          private knowledge base of my projects, decisions, and writing. If I
-          haven&apos;t shipped it, it won&apos;t pretend I have.
-        </p>
-      </motion.div>
-
-      <div
-        ref={scrollRef}
-        className="min-h-[300px] max-h-[55vh] overflow-y-auto flex flex-col gap-5 mb-6 pr-1"
-      >
-        {messages.map((m, i) => (
-          <ChatMessageView
-            key={m.id}
-            message={m}
-            isStreaming={isStreaming && i === messages.length - 1 && m.role === "assistant"}
-          />
-        ))}
-      </div>
-
-      <ChatInput
-        onSend={send}
-        onStop={stop}
-        isStreaming={isStreaming}
-        showSuggestions={!hasMessages}
-      />
-
-      {hasMessages && (
-        <button
-          onClick={resetConversation}
-          className="mt-4 text-xs font-mono uppercase tracking-[0.2em] text-fg-muted/60 hover:text-fg transition-colors"
+      <div className="grid md:grid-cols-12 gap-10 md:gap-16">
+        {/* Left rail — section title */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
+          className="md:col-span-4 md:sticky md:top-32 md:self-start"
         >
-          reset conversation →
-        </button>
-      )}
+          <p className="eyebrow mb-4">
+            <span className="num-tag mr-2">/01</span>
+            chat
+          </p>
+          <h2 className="font-editorial-tight text-4xl md:text-5xl mb-6">
+            Ask me <span className="italic-display text-accent">anything.</span>
+          </h2>
+          <p className="text-fg-muted text-[15px] leading-relaxed max-w-sm">
+            Streamed from a Claude/GPT persona, grounded on a private corpus
+            of my projects, decisions, and writing. If I haven&apos;t shipped
+            it, the clone won&apos;t pretend I have.
+          </p>
+          <div className="mt-8 space-y-3 text-sm">
+            <Hint label="Stack" body="FastAPI · pgvector · BGE-M3 · Redis" />
+            <Hint label="Latency" body="~600ms first token" />
+            <Hint label="Persona" body="No LinkedIn-influencer prose" />
+          </div>
+        </motion.div>
+
+        {/* Right rail — the actual chat surface */}
+        <div className="md:col-span-8">
+          <div className="surface p-4 md:p-6">
+            <div
+              ref={scrollRef}
+              className="min-h-[320px] max-h-[58vh] overflow-y-auto flex flex-col gap-5 mb-5 pr-1"
+            >
+              {!hasMessages && <EmptyState />}
+              {messages.map((m, i) => (
+                <ChatMessageView
+                  key={m.id}
+                  message={m}
+                  isStreaming={
+                    isStreaming &&
+                    i === messages.length - 1 &&
+                    m.role === "assistant"
+                  }
+                />
+              ))}
+            </div>
+
+            <ChatInput
+              onSend={send}
+              onStop={stop}
+              isStreaming={isStreaming}
+              showSuggestions={!hasMessages}
+            />
+          </div>
+
+          {hasMessages && (
+            <button
+              onClick={resetConversation}
+              className="mt-4 eyebrow hover:eyebrow-accent transition-colors"
+            >
+              ← reset conversation
+            </button>
+          )}
+        </div>
+      </div>
     </section>
+  );
+}
+
+function Hint({ label, body }: { label: string; body: string }) {
+  return (
+    <div className="flex items-baseline gap-3">
+      <span className="eyebrow w-16 shrink-0">{label}</span>
+      <span className="text-fg-muted text-[13px] font-mono">{body}</span>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center h-[280px] text-center px-6">
+      <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center mb-4">
+        <span className="font-editorial italic text-2xl text-accent">R</span>
+      </div>
+      <p className="font-editorial text-xl text-fg mb-1">
+        the line is open.
+      </p>
+      <p className="text-fg-muted text-sm max-w-xs">
+        Pick a thread below or type your own question to get started.
+      </p>
+    </div>
   );
 }

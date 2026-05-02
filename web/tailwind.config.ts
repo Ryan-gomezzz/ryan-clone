@@ -11,13 +11,17 @@ const config: Config = {
       colors: {
         bg: "var(--bg)",
         "bg-elev": "var(--bg-elev)",
+        "bg-soft": "var(--bg-soft)",
         fg: "var(--fg)",
         "fg-muted": "var(--fg-muted)",
+        "fg-subtle": "var(--fg-subtle)",
         accent: "var(--accent)",
         "accent-hot": "var(--accent-hot)",
         "accent-deep": "var(--accent-deep)",
         border: "var(--border)",
+        "border-hover": "var(--border-hover)",
         danger: "var(--danger)",
+        success: "var(--success)",
       },
       fontFamily: {
         serif: ["var(--font-serif)", "ui-serif", "Georgia", "serif"],
@@ -28,28 +32,13 @@ const config: Config = {
         tightest: "-0.04em",
       },
       animation: {
-        "accent-cycle": "accentCycle 8s ease-in-out infinite",
         "subtle-pulse": "subtlePulse 3s ease-in-out infinite",
-        "grain-shift": "grainShift 8s steps(8) infinite",
+        "slow-spin": "spin 24s linear infinite",
       },
       keyframes: {
-        accentCycle: {
-          "0%, 100%": { color: "var(--fg)" },
-          "50%": { color: "var(--accent)" },
-        },
         subtlePulse: {
           "0%, 100%": { opacity: "0.6" },
           "50%": { opacity: "1" },
-        },
-        grainShift: {
-          "0%, 100%": { transform: "translate(0,0)" },
-          "12%": { transform: "translate(-3%,-2%)" },
-          "25%": { transform: "translate(-5%,3%)" },
-          "37%": { transform: "translate(3%,-4%)" },
-          "50%": { transform: "translate(-2%,5%)" },
-          "62%": { transform: "translate(-4%,-3%)" },
-          "75%": { transform: "translate(2%,3%)" },
-          "87%": { transform: "translate(-3%,-2%)" },
         },
       },
     },

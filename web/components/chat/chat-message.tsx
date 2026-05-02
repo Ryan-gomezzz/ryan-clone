@@ -17,26 +17,23 @@ export function ChatMessageView({
   const isUser = message.role === "user";
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
-      className={cn(
-        "flex w-full",
-        isUser ? "justify-end" : "justify-start"
-      )}
+      transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
+      className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}
     >
       <div
         className={cn(
-          "max-w-[88%] md:max-w-[78%] px-5 py-3.5 rounded-md",
+          "max-w-[92%] md:max-w-[88%] px-4 py-3 rounded-lg",
           isUser
-            ? "bg-bg-elev border border-border text-fg"
+            ? "bg-bg-soft border border-border text-fg"
             : "text-fg"
         )}
       >
         {!isUser && (
-          <div className="flex items-center gap-2 mb-2 text-[10px] font-mono uppercase tracking-[0.2em] text-fg-muted">
+          <div className="flex items-center gap-2 mb-2 eyebrow">
             <span className="w-1 h-1 rounded-full bg-accent" />
-            ryan
+            <span>ryan</span>
             {message.latencyMs ? (
               <span className="opacity-50">· {message.latencyMs}ms</span>
             ) : null}
@@ -57,7 +54,7 @@ export function ChatMessageView({
                 <ThinkingShimmer />
               )}
               {isStreaming && message.content.length > 0 && (
-                <span className="inline-block w-2 h-4 ml-0.5 -mb-0.5 bg-accent animate-subtle-pulse" />
+                <span className="inline-block w-1.5 h-4 ml-0.5 -mb-0.5 bg-accent animate-pulse" />
               )}
             </>
           )}
@@ -70,9 +67,9 @@ export function ChatMessageView({
 function ThinkingShimmer() {
   return (
     <div className="flex flex-col gap-2 py-1">
-      <div className="h-3 w-44 rounded shimmer" />
-      <div className="h-3 w-72 rounded shimmer" />
-      <div className="h-3 w-56 rounded shimmer" />
+      <div className="h-2.5 w-44 rounded shimmer" />
+      <div className="h-2.5 w-72 rounded shimmer" />
+      <div className="h-2.5 w-56 rounded shimmer" />
     </div>
   );
 }

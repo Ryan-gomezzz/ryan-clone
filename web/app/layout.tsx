@@ -3,7 +3,6 @@ import "../styles/globals.css";
 import "highlight.js/styles/github-dark-dimmed.css";
 import { Toaster } from "sonner";
 import { Grain } from "@/components/ui/grain";
-import { Cursor } from "@/components/ui/cursor";
 import { Nav } from "@/components/ui/nav";
 import { Providers } from "@/components/providers";
 
@@ -45,7 +44,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="bg-bg text-fg antialiased">
         <Providers>
-          <Cursor />
           <Grain />
           <Nav />
           <main className="relative z-10">{children}</main>

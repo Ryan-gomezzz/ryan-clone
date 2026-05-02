@@ -17,7 +17,6 @@ export function VoiceCall() {
   );
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
 
   const { data: voiceStatus } = useQuery({
     queryKey: ["voice-status"],
@@ -28,7 +27,6 @@ export function VoiceCall() {
   useEffect(() => {
     return () => {
       wsRef.current?.close();
-      audioCtxRef.current?.close().catch(() => undefined);
     };
   }, []);
 
@@ -50,7 +48,6 @@ export function VoiceCall() {
       ws.onclose = () => setState("ended");
       ws.onerror = () => setState("error");
       ws.onmessage = (event) => {
-        // Pipecat may send JSON events for transcript updates and binary for audio.
         if (typeof event.data === "string") {
           try {
             const msg = JSON.parse(event.data);
@@ -63,8 +60,6 @@ export function VoiceCall() {
             /* ignore non-JSON */
           }
         }
-        // Binary audio frames are handled by Pipecat's web client when wired in
-        // — see VOICE_TODO.md for the production handoff.
       };
     } catch (e) {
       setState("error");
@@ -81,21 +76,27 @@ export function VoiceCall() {
   }
 
   return (
-    <div className="grid md:grid-cols-[1fr,360px] gap-8">
-      <div className="border border-border bg-bg-elev rounded-md p-8 md:p-12 flex flex-col items-center justify-center min-h-[420px]">
+    <div className="grid md:grid-cols-[1fr,380px] gap-8">
+      <div className="surface p-10 md:p-14 flex flex-col items-center justify-center min-h-[440px]">
         <PulseRing state={state} />
 
-        <p className="mt-8 font-mono text-xs uppercase tracking-[0.3em] text-fg-muted">
+        <p className="mt-10 eyebrow">
           {state === "idle" && "ready"}
           {state === "connecting" && "connecting…"}
-          {state === "live" && "live · listening"}
+          {state === "live" && (
+            <span className="eyebrow-accent">live · listening</span>
+          )}
           {state === "ended" && "call ended"}
           {state === "error" && "connection failed"}
         </p>
 
         <div className="mt-10 flex items-center gap-4">
           {state === "live" ? (
-            <Button variant="outline" onClick={endCall} className="!border-danger !text-danger">
+            <Button
+              variant="outline"
+              onClick={endCall}
+              className="!border-danger !text-danger hover:!bg-bg-soft"
+            >
               <PhoneOff className="w-4 h-4" />
               end call
             </Button>
@@ -108,19 +109,17 @@ export function VoiceCall() {
         </div>
 
         {latencyMs && (
-          <p className="mt-6 text-[10px] font-mono uppercase tracking-[0.25em] text-fg-muted">
+          <p className="mt-6 eyebrow opacity-70">
             round-trip · {latencyMs}ms
           </p>
         )}
       </div>
 
-      <div className="border border-border bg-bg-elev rounded-md p-6 min-h-[420px] overflow-hidden">
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-fg-muted mb-4">
-          live transcript
-        </p>
+      <div className="surface p-6 min-h-[440px] overflow-hidden">
+        <p className="eyebrow mb-5">live transcript</p>
         <div className="space-y-3 overflow-y-auto max-h-[360px] pr-2">
           {transcript.length === 0 ? (
-            <p className="text-fg-muted/50 text-sm">
+            <p className="text-fg-subtle text-sm">
               transcript will stream here once the call is live.
             </p>
           ) : (
@@ -129,12 +128,12 @@ export function VoiceCall() {
                 key={i}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-sm"
+                className="text-sm leading-relaxed"
               >
                 <span
                   className={cn(
-                    "font-mono text-[10px] uppercase tracking-[0.25em] mr-2",
-                    t.role === "user" ? "text-fg-muted" : "text-accent"
+                    "eyebrow mr-2",
+                    t.role === "user" ? "" : "eyebrow-accent"
                   )}
                 >
                   {t.role}
@@ -159,8 +158,8 @@ function PulseRing({ state }: { state: CallState }) {
           className="absolute inset-0 rounded-full border border-accent-deep"
           animate={
             animating
-              ? { scale: [1, 1.6], opacity: [0.6, 0] }
-              : { scale: 1, opacity: 0.3 }
+              ? { scale: [1, 1.7], opacity: [0.55, 0] }
+              : { scale: 1, opacity: 0.25 }
           }
           transition={
             animating
@@ -176,16 +175,16 @@ function PulseRing({ state }: { state: CallState }) {
       ))}
       <div
         className={cn(
-          "w-32 h-32 rounded-full bg-bg border border-border flex items-center justify-center transition-colors",
-          state === "live" && "border-accent"
+          "w-32 h-32 rounded-full bg-bg-elev border border-border flex items-center justify-center transition-all duration-500",
+          state === "live" && "border-accent shadow-[0_0_40px_-8px_var(--accent)]"
         )}
       >
         {state === "ended" || state === "error" ? (
-          <MicOff className="w-8 h-8 text-fg-muted" />
+          <MicOff className="w-8 h-8 text-fg-subtle" />
         ) : (
           <Mic
             className={cn(
-              "w-8 h-8",
+              "w-8 h-8 transition-colors",
               state === "live" ? "text-accent" : "text-fg-muted"
             )}
           />
@@ -197,13 +196,13 @@ function PulseRing({ state }: { state: CallState }) {
 
 function NotConfiguredPanel({ reason }: { reason: string | null }) {
   return (
-    <div className="border border-border bg-bg-elev rounded-md p-10 text-center">
+    <div className="surface p-12 md:p-16 text-center max-w-2xl mx-auto">
       <p className="font-editorial text-3xl mb-3">voice is offline.</p>
-      <p className="text-fg-muted text-sm max-w-md mx-auto">
+      <p className="text-fg-muted text-sm max-w-md mx-auto leading-relaxed">
         {reason ??
           "Voice keys aren't configured yet. The clone is text-only until ElevenLabs + Deepgram + a cloned voice ID land."}
       </p>
-      <p className="mt-6 text-[10px] font-mono uppercase tracking-[0.25em] text-fg-muted/60">
+      <p className="mt-8 eyebrow opacity-60">
         see VOICE_TODO.md for the recording + setup path
       </p>
     </div>

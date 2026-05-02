@@ -1,36 +1,72 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Environment, MeshTransmissionMaterial } from "@react-three/drei";
-import { useRef } from "react";
+import { Float, Environment } from "@react-three/drei";
+import { useRef, useMemo } from "react";
 import * as THREE from "three";
 
-function SlowGeometry() {
-  const meshRef = useRef<THREE.Mesh>(null!);
+function ParticleField() {
+  const ref = useRef<THREE.Points>(null!);
+  const positions = useMemo(() => {
+    const n = 600;
+    const arr = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const r = 6 + Math.random() * 5;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      arr[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+      arr[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      arr[i * 3 + 2] = r * Math.cos(phi);
+    }
+    return arr;
+  }, []);
 
   useFrame((state) => {
-    if (!meshRef.current) return;
+    if (!ref.current) return;
     const t = state.clock.getElapsedTime();
-    meshRef.current.rotation.x = t * 0.06;
-    meshRef.current.rotation.y = t * 0.08;
+    ref.current.rotation.y = t * 0.025;
+    ref.current.rotation.x = t * 0.012;
   });
 
   return (
-    <Float speed={0.6} rotationIntensity={0.3} floatIntensity={0.4}>
-      <mesh ref={meshRef} scale={2.4}>
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={positions.length / 3}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        color="#d97757"
+        size={0.018}
+        sizeAttenuation
+        transparent
+        opacity={0.55}
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
+function Wireframe() {
+  const meshRef = useRef<THREE.Mesh>(null!);
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    const t = state.clock.getElapsedTime();
+    meshRef.current.rotation.x = t * 0.04;
+    meshRef.current.rotation.y = t * 0.05;
+  });
+  return (
+    <Float speed={0.4} rotationIntensity={0.1} floatIntensity={0.2}>
+      <mesh ref={meshRef} scale={3.4}>
         <icosahedronGeometry args={[1, 1]} />
-        <MeshTransmissionMaterial
-          color="#d4a24c"
-          thickness={1.4}
-          chromaticAberration={0.06}
-          anisotropy={0.5}
-          distortion={0.3}
-          distortionScale={0.4}
-          temporalDistortion={0.04}
-          ior={1.4}
-          backside
-          roughness={0.35}
-          metalness={0.1}
+        <meshBasicMaterial
+          color="#d97757"
+          wireframe
+          transparent
+          opacity={0.16}
         />
       </mesh>
     </Float>
@@ -39,30 +75,24 @@ function SlowGeometry() {
 
 export function AmbientScene() {
   return (
-    <div className="absolute inset-0 -z-10 opacity-50 pointer-events-none">
+    <div className="absolute inset-0 -z-10 pointer-events-none">
       <Canvas
         dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: true }}
-        camera={{ position: [0, 0, 6], fov: 45 }}
+        camera={{ position: [0, 0, 7], fov: 50 }}
       >
-        <ambientLight intensity={0.25} />
-        <directionalLight
-          position={[3, 4, 5]}
-          intensity={1.4}
-          color="#e8b65a"
-        />
-        <directionalLight
-          position={[-4, -2, 3]}
-          intensity={0.6}
-          color="#8a6a2e"
-        />
-        <SlowGeometry />
-        <Environment preset="warehouse" />
+        <ambientLight intensity={0.3} />
+        <Wireframe />
+        <ParticleField />
+        <Environment preset="night" />
       </Canvas>
-      {/* Heavy gaussian blur over the whole scene to keep it ambient */}
+      {/* Bottom fade so the scene melts into the page */}
       <div
-        className="absolute inset-0 backdrop-blur-3xl"
-        style={{ background: "linear-gradient(180deg, transparent, rgba(10,9,8,0.55))" }}
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, transparent 0%, transparent 55%, var(--bg) 100%)",
+        }}
       />
     </div>
   );
