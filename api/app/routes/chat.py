@@ -89,9 +89,12 @@ def _sse(event: str | None, data: dict | str) -> bytes:
 
 @router.post("")
 async def chat(req: ChatRequest, request: Request) -> StreamingResponse:
-    if not settings.anthropic_api_key:
+    if not (settings.openai_api_key or settings.anthropic_api_key):
         CHAT_REQUESTS.labels(status="misconfigured").inc()
-        raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY not configured")
+        raise HTTPException(
+            status_code=503,
+            detail="No LLM provider key configured (set OPENAI_API_KEY or ANTHROPIC_API_KEY)",
+        )
 
     client_ip = request.client.host if request.client else "unknown"
     rl_id = req.session_id or client_ip

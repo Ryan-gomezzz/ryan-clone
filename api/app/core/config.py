@@ -46,11 +46,17 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     cache_ttl_seconds: int = 3600
 
-    # ── Anthropic ───────────────────────────────────────────────────────────
-    anthropic_api_key: str = Field(default="")
-    persona_model: str = "claude-sonnet-4-5"
+    # ── Persona LLM ─────────────────────────────────────────────────────────
+    # Provider routing: "openai" | "anthropic". Defaults to openai since that's
+    # what's wired in prod right now. Either provider key being set is enough
+    # to boot the chat path.
+    llm_provider: str = Field(default="openai")
+    persona_model: str = Field(default="gpt-4o-mini")
     persona_max_tokens: int = 1024
     persona_temperature: float = 0.6
+
+    anthropic_api_key: str = Field(default="")
+    openai_api_key: str = Field(default="")
 
     # ── Embeddings ──────────────────────────────────────────────────────────
     embedding_model_name: str = "BAAI/bge-m3"
