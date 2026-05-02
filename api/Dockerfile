@@ -20,9 +20,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python deps first for layer caching
+# Install Python deps first for layer caching.
+# Install CPU-only torch wheel before the rest — saves ~5GB on the image vs the
+# default CUDA wheels, which we don't need (EMBEDDING_DEVICE=cpu in prod).
 COPY pyproject.toml ./
 RUN pip install --upgrade pip setuptools wheel \
+ && pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.4.0,<3" \
  && pip install -e .
 
 # Pre-download the embedding model so first request is fast
