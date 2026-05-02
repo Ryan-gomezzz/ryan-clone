@@ -1,0 +1,24 @@
+name: ryan-clone-dev
+
+# Local-dev: only the data plane (Postgres + Redis). Run the Python API and
+# Next.js dev server natively for fast iteration.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ryan
+      POSTGRES_PASSWORD: ryan
+      POSTGRES_DB: ryanclone
+    volumes:
+      - pg_data_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  pg_data_dev:

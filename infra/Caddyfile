@@ -1,0 +1,40 @@
+# Caddy reverse proxy with auto-TLS via Let's Encrypt.
+# Edit ryangomez.dev → your real domain before deploy.
+
+{
+    email ryangomez9965@gmail.com
+}
+
+ryangomez.dev, www.ryangomez.dev {
+    encode zstd gzip
+
+    # Static + page traffic → Next.js
+    reverse_proxy web:3000 {
+        header_up X-Real-IP {remote_host}
+    }
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "interest-cohort=()"
+    }
+}
+
+api.ryangomez.dev {
+    encode zstd gzip
+
+    # WebSockets (voice) — Caddy handles upgrade transparently
+    reverse_proxy api:8000 {
+        header_up X-Real-IP {remote_host}
+        flush_interval -1
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        Access-Control-Allow-Origin "https://ryangomez.dev"
+        Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization"
+    }
+}

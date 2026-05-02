@@ -1,0 +1,270 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  --bg: #0a0908;
+  --bg-elev: #14110f;
+  --fg: #f5ede0;
+  --fg-muted: #9a8e7a;
+  --accent: #d4a24c;
+  --accent-hot: #e8b65a;
+  --accent-deep: #8a6a2e;
+  --grain-opacity: 0.06;
+  --border: #2a2520;
+  --danger: #c4634a;
+
+  --font-serif: "Instrument Serif", "PP Editorial New", Georgia, serif;
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+* {
+  border-color: var(--border);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+body {
+  /* Subtle radial vignette over the whole page */
+  background:
+    radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.55) 100%),
+    var(--bg);
+  min-height: 100vh;
+  font-feature-settings: "ss01", "cv11";
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ── Film grain overlay ──────────────────────────────────────────────── */
+
+.grain {
+  position: fixed;
+  inset: -120%;
+  width: 320%;
+  height: 320%;
+  pointer-events: none;
+  z-index: 60;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: overlay;
+  animation: grainShift 8s steps(8) infinite;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96  0 0 0 0 0.93  0 0 0 0 0.87  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* ── Custom cursor (lagging amber dot) ──────────────────────────────── */
+
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 100;
+  transform: translate3d(-50%, -50%, 0);
+  transition: transform 50ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  mix-blend-mode: difference;
+  display: none;
+}
+
+@media (pointer: fine) {
+  .cursor-dot {
+    display: block;
+  }
+  body {
+    cursor: none;
+  }
+  a,
+  button,
+  input,
+  textarea {
+    cursor: none;
+  }
+}
+
+/* ── Headings ───────────────────────────────────────────────────────── */
+
+.font-editorial {
+  font-family: var(--font-serif);
+  font-feature-settings: "ss01";
+  letter-spacing: -0.025em;
+  font-weight: 400;
+}
+
+.font-editorial-tight {
+  font-family: var(--font-serif);
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  font-weight: 400;
+}
+
+.italic-display {
+  font-style: italic;
+  letter-spacing: -0.03em;
+}
+
+/* ── Page transitions ───────────────────────────────────────────────── */
+
+.page-enter {
+  opacity: 0;
+  filter: blur(8px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  filter: blur(0);
+  transition:
+    opacity 600ms ease-out,
+    filter 600ms ease-out;
+}
+
+/* ── Scrollbar (subtle) ─────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-deep);
+}
+
+/* ── Markdown chat content ──────────────────────────────────────────── */
+
+.message-prose {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--fg);
+}
+
+.message-prose p + p {
+  margin-top: 0.85em;
+}
+
+.message-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--bg-elev);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.message-prose pre {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  margin: 0.85em 0;
+}
+
+.message-prose pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.message-prose ul,
+.message-prose ol {
+  margin: 0.6em 0;
+  padding-left: 1.4em;
+}
+.message-prose li {
+  margin: 0.25em 0;
+}
+.message-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.message-prose a:hover {
+  color: var(--accent-hot);
+}
+.message-prose strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* ── Highlight.js dark theme override ───────────────────────────────── */
+
+.hljs {
+  color: #e8d8b8;
+  background: transparent;
+}
+.hljs-keyword,
+.hljs-built_in,
+.hljs-tag {
+  color: #e8b65a;
+}
+.hljs-string,
+.hljs-attr {
+  color: #b8c98c;
+}
+.hljs-comment {
+  color: #6b6258;
+  font-style: italic;
+}
+.hljs-number,
+.hljs-literal {
+  color: #d4a24c;
+}
+.hljs-title,
+.hljs-function {
+  color: #f5ede0;
+}
+
+/* ── Misc ───────────────────────────────────────────────────────────── */
+
+.thin-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border),
+    var(--border),
+    transparent
+  );
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elev) 0%,
+    var(--border) 50%,
+    var(--bg-elev) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.4s infinite linear;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}

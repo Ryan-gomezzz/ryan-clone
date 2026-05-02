@@ -1,0 +1,68 @@
+# Move to .github/workflows/ci.yml in the repo root before pushing.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api:
+    name: api · lint + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: install
+        working-directory: api
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: lint
+        working-directory: api
+        run: ruff check app
+      - name: test
+        working-directory: api
+        run: pytest -q
+
+  web:
+    name: web · lint + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: web/package.json
+      - name: install
+        working-directory: web
+        run: npm install --legacy-peer-deps
+      - name: typecheck
+        working-directory: web
+        run: npm run typecheck
+      - name: build
+        working-directory: web
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+        run: npm run build
+
+  deploy:
+    name: deploy · hetzner
+    needs: [api, web]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: ssh deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            cd /opt/ryan-clone
+            bash infra/hetzner-deploy.sh

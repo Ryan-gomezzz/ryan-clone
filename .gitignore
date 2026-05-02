@@ -1,0 +1,44 @@
+# ── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+htmlcov/
+.coverage
+
+# ── Node / Next ────────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.vercel/
+
+# ── Env / secrets ──────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── OS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Build artifacts ────────────────────────────────────────────────────────
+dist/
+build/
+*.tsbuildinfo
+
+# ── Editor ─────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+
+# ── Backups / dumps ────────────────────────────────────────────────────────
+*.sql.gz
+*.dump
+
+# ── Spec / build artifacts to keep out of repo ─────────────────────────────
+claude.md
