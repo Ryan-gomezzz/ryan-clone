@@ -138,19 +138,25 @@ async def synthesize(req: SynthRequest):
         },
     }
 
+    # Probe first so we can fail fast with a real status code rather than
+    # silently returning a 0-byte 200 from inside the streaming generator.
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        probe = await client.post(url, json=payload, headers=headers)
+        if probe.status_code != 200:
+            detail = probe.text[:300] if probe.text else f"elevenlabs {probe.status_code}"
+            log.warning(
+                "elevenlabs_failed", status=probe.status_code, body=detail
+            )
+            raise HTTPException(
+                status_code=502,
+                detail=f"elevenlabs {probe.status_code}: {detail}",
+            )
+        first_chunk = probe.content
+
     async def stream_audio():
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            async with client.stream("POST", url, json=payload, headers=headers) as resp:
-                if resp.status_code != 200:
-                    body = await resp.aread()
-                    log.warning(
-                        "elevenlabs_failed",
-                        status=resp.status_code,
-                        body=body.decode("utf-8", errors="replace")[:200],
-                    )
-                    return
-                async for chunk in resp.aiter_bytes(chunk_size=4096):
-                    yield chunk
+        # Yield what we already fetched, then continue streaming the rest.
+        if first_chunk:
+            yield first_chunk
 
     return StreamingResponse(
         stream_audio(),
