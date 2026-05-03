@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Square } from "lucide-react";
 import { cn } from "@/lib/cn";
+import type { ChatMode } from "@/lib/store";
 
-const SUGGESTIONS = [
+const SUGGESTIONS_VISITOR = [
   "what is SOYL AI?",
   "tell me about the hotel PMS",
   "why pgvector over pinecone?",
@@ -13,11 +14,20 @@ const SUGGESTIONS = [
   "how do I get in touch?",
 ];
 
+const SUGGESTIONS_BRAINSTORM = [
+  "should we open-source the orchestrator?",
+  "argue against the saarland MS plan",
+  "what am I underweighting on the PMS pilot?",
+  "if SOYL closed tomorrow, what's the next thing?",
+  "draft a 2-week sprint for the agency site",
+];
+
 interface ChatInputProps {
   onSend: (text: string) => void;
   onStop: () => void;
   isStreaming: boolean;
   showSuggestions?: boolean;
+  mode?: ChatMode;
 }
 
 export function ChatInput({
@@ -25,6 +35,7 @@ export function ChatInput({
   onStop,
   isStreaming,
   showSuggestions,
+  mode = "visitor",
 }: ChatInputProps) {
   const [value, setValue] = useState("");
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -50,11 +61,19 @@ export function ChatInput({
     }
   }
 
+  const suggestions =
+    mode === "brainstorm" ? SUGGESTIONS_BRAINSTORM : SUGGESTIONS_VISITOR;
+
+  const placeholder =
+    mode === "brainstorm"
+      ? "what are you working through, ryan?"
+      : "ask about the stack, projects, the long game…";
+
   return (
     <div className="w-full">
       {showSuggestions && (
         <div className="mb-3 flex flex-wrap gap-2">
-          {SUGGESTIONS.map((s) => (
+          {suggestions.map((s) => (
             <button
               key={s}
               type="button"
@@ -77,7 +96,7 @@ export function ChatInput({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="ask about the stack, projects, the long game…"
+          placeholder={placeholder}
           rows={1}
           className="flex-1 resize-none bg-transparent text-fg placeholder:text-fg-subtle focus:outline-none font-sans text-base leading-relaxed py-1.5"
           disabled={isStreaming}
@@ -104,7 +123,9 @@ export function ChatInput({
         )}
       </div>
       <p className="mt-2 eyebrow opacity-60">
-        enter · send  ·  shift+enter · newline  ·  grounded on Ryan&apos;s public corpus
+        {mode === "brainstorm"
+          ? "brainstorm mode · iris will push back · sessions persist"
+          : "enter · send  ·  shift+enter · newline  ·  grounded on Ryan's corpus"}
       </p>
     </div>
   );

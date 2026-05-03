@@ -3,10 +3,12 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { ChatInput } from "./chat-input";
 import { ChatMessageView } from "./chat-message";
-import { useChatStore, type ChatMessage } from "@/lib/store";
-import { streamChat } from "@/lib/api";
+import { ModeToggle } from "./mode-toggle";
+import { useChatStore, type ChatMessage, type ChatMode } from "@/lib/store";
+import { streamChat, fetchCharacter } from "@/lib/api";
 
 function uid() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -20,14 +22,23 @@ export function Chat() {
     sessionId,
     messages,
     isStreaming,
+    mode,
     setSessionId,
     appendMessage,
     appendDelta,
     setMessageMeta,
     setStreaming,
     setError,
+    setMode,
     resetConversation,
   } = useChatStore();
+
+  const { data: character } = useQuery({
+    queryKey: ["character"],
+    queryFn: fetchCharacter,
+    staleTime: 60_000,
+  });
+  const characterName = character?.name ?? "Iris";
 
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -75,6 +86,7 @@ export function Chat() {
           message: text,
           sessionId,
           history: trimmedHistory,
+          mode,
           signal: abortRef.current.signal,
         },
         {
@@ -119,6 +131,12 @@ export function Chat() {
     setStreaming(false);
   }
 
+  function onModeChange(m: ChatMode) {
+    if (m === mode) return;
+    setMode(m);
+    resetConversation();
+  }
+
   const hasMessages = messages.length > 0;
 
   return (
@@ -139,29 +157,57 @@ export function Chat() {
             <span className="num-tag mr-2">/01</span>
             chat
           </p>
-          <h2 className="font-editorial-tight text-4xl md:text-5xl mb-6">
-            Ask me <span className="italic-display text-accent">anything.</span>
+          <h2 className="font-editorial-tight text-4xl md:text-5xl mb-3">
+            Talk to{" "}
+            <span className="italic-display text-accent">{characterName}.</span>
           </h2>
-          <p className="text-fg-muted text-[15px] leading-relaxed max-w-sm">
-            Streamed from a Claude/GPT persona, grounded on a private corpus
-            of my projects, decisions, and writing. If I haven&apos;t shipped
-            it, the clone won&apos;t pretend I have.
+          <p className="text-fg-muted text-[15px] leading-relaxed max-w-sm mb-6">
+            {mode === "visitor" ? (
+              <>
+                {characterName} is Ryan&apos;s inner voice — calm, technically
+                literate, grounded on a private corpus of his projects and
+                writing. She won&apos;t make things up.
+              </>
+            ) : (
+              <>
+                Brainstorm mode. {characterName} pushes back, surfaces
+                contradictions in your corpus, and asks the next question.
+                Use her as a thinking partner — she remembers prior sessions.
+              </>
+            )}
           </p>
-          <div className="mt-8 space-y-3 text-sm">
-            <Hint label="Stack" body="FastAPI · pgvector · BGE-M3 · Redis" />
-            <Hint label="Latency" body="~600ms first token" />
-            <Hint label="Persona" body="No LinkedIn-influencer prose" />
+
+          <div className="space-y-3 text-sm">
+            <Hint label="Stack" body="FastAPI · pgvector · BGE-M3" />
+            <Hint label="LLM" body="OpenAI · gpt-4o-mini" />
+            <Hint
+              label="Voice"
+              body={
+                character?.voice_enabled
+                  ? "ElevenLabs · live"
+                  : "voice offline (see /voice)"
+              }
+            />
           </div>
         </motion.div>
 
         {/* Right rail — the actual chat surface */}
         <div className="md:col-span-8">
+          <div className="flex items-center justify-between mb-3">
+            <p className="eyebrow opacity-70">
+              {hasMessages ? `${messages.length / 2 | 0} turns` : "new session"}
+            </p>
+            <ModeToggle mode={mode} onChange={onModeChange} />
+          </div>
+
           <div className="surface p-4 md:p-6">
             <div
               ref={scrollRef}
               className="min-h-[320px] max-h-[58vh] overflow-y-auto flex flex-col gap-5 mb-5 pr-1"
             >
-              {!hasMessages && <EmptyState />}
+              {!hasMessages && (
+                <EmptyState mode={mode} characterName={characterName} />
+              )}
               {messages.map((m, i) => (
                 <ChatMessageView
                   key={m.id}
@@ -171,6 +217,7 @@ export function Chat() {
                     i === messages.length - 1 &&
                     m.role === "assistant"
                   }
+                  characterName={characterName}
                 />
               ))}
             </div>
@@ -180,6 +227,7 @@ export function Chat() {
               onStop={stop}
               isStreaming={isStreaming}
               showSuggestions={!hasMessages}
+              mode={mode}
             />
           </div>
 
@@ -206,18 +254,40 @@ function Hint({ label, body }: { label: string; body: string }) {
   );
 }
 
-function EmptyState() {
+function EmptyState({
+  mode,
+  characterName,
+}: {
+  mode: ChatMode;
+  characterName: string;
+}) {
   return (
     <div className="flex flex-col items-center justify-center h-[280px] text-center px-6">
-      <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center mb-4">
-        <span className="font-editorial italic text-2xl text-accent">R</span>
-      </div>
-      <p className="font-editorial text-xl text-fg mb-1">
-        the line is open.
+      <BreathingMark name={characterName} />
+      <p className="font-editorial text-xl text-fg mt-5 mb-1">
+        {mode === "visitor"
+          ? `I'm ${characterName}.`
+          : `Ryan, what are we working on?`}
       </p>
       <p className="text-fg-muted text-sm max-w-xs">
-        Pick a thread below or type your own question to get started.
+        {mode === "visitor"
+          ? "Ask me anything about Ryan — the stack, the projects, the long game."
+          : "Pick a thread. I'll push back where I should and stay quiet where you're already right."}
       </p>
     </div>
+  );
+}
+
+function BreathingMark({ name }: { name: string }) {
+  return (
+    <motion.div
+      animate={{ scale: [1, 1.06, 1], opacity: [0.85, 1, 0.85] }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      className="w-16 h-16 rounded-full border border-border flex items-center justify-center bg-bg-elev shadow-[0_0_60px_-12px_var(--accent)]"
+    >
+      <span className="font-editorial italic text-3xl text-accent">
+        {name.charAt(0).toUpperCase()}
+      </span>
+    </motion.div>
   );
 }

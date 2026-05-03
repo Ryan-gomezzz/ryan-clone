@@ -10,9 +10,11 @@ import type { ChatMessage } from "@/lib/store";
 export function ChatMessageView({
   message,
   isStreaming,
+  characterName = "Iris",
 }: {
   message: ChatMessage;
   isStreaming?: boolean;
+  characterName?: string;
 }) {
   const isUser = message.role === "user";
   return (
@@ -33,7 +35,7 @@ export function ChatMessageView({
         {!isUser && (
           <div className="flex items-center gap-2 mb-2 eyebrow flex-wrap">
             <span className="w-1 h-1 rounded-full bg-accent" />
-            <span>ryan</span>
+            <span>{characterName.toLowerCase()}</span>
             {message.latencyMs ? (
               <span className="opacity-50">· {message.latencyMs}ms</span>
             ) : null}

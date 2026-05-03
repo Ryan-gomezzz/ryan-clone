@@ -74,3 +74,17 @@ async def root() -> dict:
         "docs": "/docs",
         "health": "/healthz",
     }
+
+
+@app.get("/character")
+async def character() -> dict:
+    """Public character metadata — used by the frontend to render the right
+    name + pronouns. Cheap, cacheable."""
+    return {
+        "name": settings.character_name,
+        "pronoun_subject": settings.character_pronoun_subject,
+        "pronoun_object": settings.character_pronoun_object,
+        "pronoun_possessive": settings.character_pronoun_possessive,
+        "voice_enabled": settings.voice_enabled and bool(settings.elevenlabs_voice_id),
+        "modes": ["visitor", "brainstorm"],
+    }

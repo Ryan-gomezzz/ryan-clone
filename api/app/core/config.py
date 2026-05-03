@@ -54,9 +54,20 @@ class Settings(BaseSettings):
     persona_model: str = Field(default="gpt-4o-mini")
     persona_max_tokens: int = 1024
     persona_temperature: float = 0.6
+    # Brainstorm mode runs hotter — more pushback, more divergent thinking.
+    brainstorm_temperature: float = 0.85
+    brainstorm_max_tokens: int = 2048
 
     anthropic_api_key: str = Field(default="")
     openai_api_key: str = Field(default="")
+
+    # ── Character ───────────────────────────────────────────────────────────
+    # The clone's character — Ryan's "inner voice." Swap CHARACTER_NAME without
+    # redeploying code; the persona prompt template substitutes it.
+    character_name: str = Field(default="Iris")
+    character_pronoun_subject: str = Field(default="she")
+    character_pronoun_object: str = Field(default="her")
+    character_pronoun_possessive: str = Field(default="her")
 
     # ── Embeddings ──────────────────────────────────────────────────────────
     embedding_model_name: str = "BAAI/bge-m3"

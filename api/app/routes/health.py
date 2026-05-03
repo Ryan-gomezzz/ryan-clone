@@ -35,11 +35,14 @@ async def healthz() -> dict:
         "status": "ok" if (db_ok and redis_ok) else "degraded",
         "db": db_ok,
         "redis": redis_ok,
+        "character": settings.character_name,
         "llm_provider": settings.llm_provider,
         "persona_model": settings.persona_model,
         "openai_key_configured": bool(settings.openai_api_key),
         "anthropic_key_configured": bool(settings.anthropic_api_key),
         "voice_enabled": settings.voice_enabled,
+        "voice_id_configured": bool(settings.elevenlabs_voice_id),
+        "mem0_enabled": settings.mem0_enabled,
         "environment": settings.environment,
     }
 

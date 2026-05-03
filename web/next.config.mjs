@@ -13,9 +13,12 @@ const nextConfig = {
     return [
       // Proxy SSE chat through Next so we can stay same-origin in dev.
       { source: "/api/chat/:path*", destination: `${apiBase}/chat/:path*` },
+      { source: "/api/chat", destination: `${apiBase}/chat` },
       { source: "/api/projects/:path*", destination: `${apiBase}/projects/:path*` },
+      { source: "/api/projects", destination: `${apiBase}/projects` },
       { source: "/api/voice/:path*", destination: `${apiBase}/voice/:path*` },
       { source: "/api/healthz", destination: `${apiBase}/healthz` },
+      { source: "/api/character", destination: `${apiBase}/character` },
     ];
   },
 };

@@ -1,31 +1,57 @@
 """LangGraph orchestration for the persona agent: retrieve → reason → stream.
 
-The persona LLM is provider-agnostic — wired through a thin LLMClient interface
-that both Anthropic Claude and OpenAI GPT models implement. Switch via the
-LLM_PROVIDER env var; the rest of the pipeline doesn't care which one is live."""
+The persona LLM is provider-agnostic (OpenAI / Anthropic) and mode-aware:
+- "visitor"    → Iris speaking on Ryan's behalf to a visitor (default)
+- "brainstorm" → Iris speaking *to* Ryan as his thinking partner
+
+The character name is a runtime substitution — change CHARACTER_NAME without
+redeploying code."""
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from langgraph.graph import END, StateGraph
 
+from app.agents.memory import recall
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.rag.search import RetrievedChunk, format_context, retrieve
 
 log = get_logger("agents.persona")
 
-_persona_prompt: str | None = None
+Mode = Literal["visitor", "brainstorm"]
+
+_visitor_prompt: str | None = None
+_brainstorm_prompt: str | None = None
 _anthropic = None
 _openai = None
 
 
-def _load_persona_prompt() -> str:
-    global _persona_prompt
-    if _persona_prompt is None:
-        _persona_prompt = settings.persona_prompt_path.read_text(encoding="utf-8")
-    return _persona_prompt
+def _load_prompt(mode: Mode) -> str:
+    global _visitor_prompt, _brainstorm_prompt
+    if mode == "brainstorm":
+        if _brainstorm_prompt is None:
+            path = settings.persona_prompt_path.parent / "inner_voice_brainstorm.md"
+            _brainstorm_prompt = path.read_text(encoding="utf-8")
+        raw = _brainstorm_prompt
+    else:
+        if _visitor_prompt is None:
+            path = settings.persona_prompt_path.parent / "inner_voice.md"
+            _visitor_prompt = path.read_text(encoding="utf-8")
+        raw = _visitor_prompt
+    return _substitute_character(raw)
+
+
+def _substitute_character(template: str) -> str:
+    return (
+        template.replace("{{CHARACTER_NAME}}", settings.character_name)
+        .replace("{{CHARACTER_PRONOUN_SUBJECT}}", settings.character_pronoun_subject)
+        .replace("{{CHARACTER_PRONOUN_OBJECT}}", settings.character_pronoun_object)
+        .replace(
+            "{{CHARACTER_PRONOUN_POSSESSIVE}}", settings.character_pronoun_possessive
+        )
+    )
 
 
 # ── Provider clients ───────────────────────────────────────────────────────
@@ -54,8 +80,6 @@ def _get_openai():
 
 
 def _resolve_provider() -> str:
-    """Pick the active provider. Explicit LLM_PROVIDER wins; otherwise fall
-    back to whichever key is set (openai preferred since that's what's wired)."""
     provider = settings.llm_provider.lower().strip()
     if provider == "openai" and settings.openai_api_key:
         return "openai"
@@ -73,18 +97,28 @@ def _resolve_provider() -> str:
 
 class PersonaState(TypedDict, total=False):
     user_message: str
-    history: list[dict[str, str]]  # prior turns: [{"role": "user"|"assistant", "content": "..."}]
+    history: list[dict[str, str]]
+    mode: Mode
+    session_id: str | None
     retrieved: list[RetrievedChunk]
     context_block: str
+    memory_block: str
 
 
 async def _retrieve_node(state: PersonaState) -> PersonaState:
     chunks = await retrieve(state["user_message"])
-    return {
+    out: PersonaState = {
         **state,
         "retrieved": chunks,
         "context_block": format_context(chunks),
     }
+    # Brainstorm mode pulls episodic memory if available
+    if state.get("mode") == "brainstorm" and state.get("session_id"):
+        memories = await recall(state["session_id"], state["user_message"], k=5)
+        if memories:
+            joined = "\n".join(f"- {m}" for m in memories if m)
+            out["memory_block"] = f"<memory>\n{joined}\n</memory>"
+    return out
 
 
 _compiled_graph = None
@@ -105,36 +139,70 @@ def _graph():
 
 
 async def run_retrieval(
-    user_message: str, history: list[dict[str, str]] | None = None
+    user_message: str,
+    history: list[dict[str, str]] | None = None,
+    *,
+    mode: Mode = "visitor",
+    session_id: str | None = None,
 ) -> PersonaState:
-    initial: PersonaState = {"user_message": user_message, "history": history or []}
+    initial: PersonaState = {
+        "user_message": user_message,
+        "history": history or [],
+        "mode": mode,
+        "session_id": session_id,
+    }
     return await _graph().ainvoke(initial)  # type: ignore[return-value]
 
 
 async def stream_persona_reply(
     user_message: str,
     history: list[dict[str, str]] | None = None,
+    *,
+    mode: Mode = "visitor",
+    session_id: str | None = None,
 ) -> AsyncIterator[dict]:
     """Yields events: {"type": "context", "doc_ids": [...]} then
     {"type": "delta", "text": "..."} repeatedly, then {"type": "done"}."""
-    state = await run_retrieval(user_message, history)
+    state = await run_retrieval(
+        user_message, history, mode=mode, session_id=session_id
+    )
     retrieved: list[RetrievedChunk] = state.get("retrieved", [])
     context_block = state.get("context_block", "")
+    memory_block = state.get("memory_block", "")
 
     yield {
         "type": "context",
         "doc_ids": list({c.doc_id for c in retrieved}),
         "doc_titles": list({c.doc_title for c in retrieved}),
+        "memory_count": memory_block.count("\n- ") if memory_block else 0,
     }
 
-    persona_prompt = _load_persona_prompt()
-    user_with_context = (
-        user_message if not context_block else f"{user_message}\n\n{context_block}"
-    )
+    persona_prompt = _load_prompt(mode)
+    blocks: list[str] = [user_message]
+    if context_block:
+        blocks.append(context_block)
+    if memory_block:
+        blocks.append(memory_block)
+    user_with_context = "\n\n".join(blocks)
 
     history = history or []
     provider = _resolve_provider()
-    log.info("persona_call", provider=provider, model=settings.persona_model)
+
+    # Mode-specific generation tuning
+    if mode == "brainstorm":
+        max_tokens = settings.brainstorm_max_tokens
+        temperature = settings.brainstorm_temperature
+    else:
+        max_tokens = settings.persona_max_tokens
+        temperature = settings.persona_temperature
+
+    log.info(
+        "persona_call",
+        provider=provider,
+        model=settings.persona_model,
+        mode=mode,
+        memory_used=bool(memory_block),
+    )
 
     full_text_parts: list[str] = []
 
@@ -152,8 +220,8 @@ async def stream_persona_reply(
         stream = await client.chat.completions.create(
             model=settings.persona_model,
             messages=messages,
-            temperature=settings.persona_temperature,
-            max_tokens=settings.persona_max_tokens,
+            temperature=temperature,
+            max_tokens=max_tokens,
             stream=True,
         )
         async for chunk in stream:
@@ -176,8 +244,8 @@ async def stream_persona_reply(
         ]
         async with client.messages.stream(
             model=settings.persona_model,
-            max_tokens=settings.persona_max_tokens,
-            temperature=settings.persona_temperature,
+            max_tokens=max_tokens,
+            temperature=temperature,
             system=persona_prompt,
             messages=messages,
         ) as stream:

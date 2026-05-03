@@ -53,19 +53,18 @@ export function Hero() {
         </motion.p>
 
         <h1 className="font-editorial-tight text-[clamp(3.5rem,11vw,10rem)] text-fg max-w-5xl">
-          <RevealText text="Hey," initialDelay={0.1} />{" "}
+          <RevealText text="Meet" initialDelay={0.1} />{" "}
           <span className="italic-display text-accent">
-            <RevealText text="I'm Ryan." initialDelay={0.2} />
+            <RevealText text="Iris —" initialDelay={0.2} />
           </span>
           <br />
           <span className="text-fg-muted">
-            <RevealText text="A clone of me," initialDelay={0.5} />
+            <RevealText text="Ryan's inner voice." initialDelay={0.5} />
           </span>
           <br />
           <span className="text-fg-muted">
-            <RevealText text="that you can ask" initialDelay={0.75} />
-          </span>
-          <br />
+            <RevealText text="Ask her" initialDelay={0.85} />
+          </span>{" "}
           <RevealText text="anything." initialDelay={1.0} />
         </h1>
 
@@ -81,15 +80,17 @@ export function Hero() {
             className="md:col-span-7 text-fg-muted text-base md:text-[17px] leading-relaxed"
           >
             <p>
-              I build production multi-agent systems for hospitality —{" "}
-              <span className="text-fg">SOYL AI</span> is a hotel PMS with a
-              native data layer, currently piloting at a 30-room property.
-              ECE undergrad at MSRIT, class of May 2027.
+              Iris isn&apos;t pretending to be Ryan. She&apos;s the part of his
+              thinking that talks. Same RAG corpus, same hard rules — calm,
+              technically literate, won&apos;t fabricate what he hasn&apos;t
+              shipped. <span className="text-fg">SOYL AI</span> founder, ECE
+              at MSRIT, class of May 2027. The rest, ask her.
             </p>
             <p className="mt-4">
-              This page is a RAG-grounded clone trained on what I&apos;ve
-              shipped and how I think about it. It won&apos;t make things up.
-              Ask it about the stack, the projects, the long game.
+              Two modes:{" "}
+              <span className="text-fg">visitor</span> for questions about
+              him, <span className="text-fg">brainstorm</span> if you&apos;re
+              Ryan and want a thinking partner who pushes back.
             </p>
 
             <a
@@ -102,7 +103,7 @@ export function Hero() {
                 <ArrowDown className="w-5 h-5 text-fg-muted group-hover:text-accent group-hover:translate-y-0.5 transition-all duration-500" />
               </span>
               <span className="text-fg group-hover:text-accent transition-colors text-sm font-mono uppercase tracking-[0.2em]">
-                start chatting
+                talk to iris
               </span>
             </a>
           </motion.div>

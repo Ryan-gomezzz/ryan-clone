@@ -8,6 +8,8 @@ export interface ChatStreamHandlers {
   onError?: (detail: string) => void;
 }
 
+export type ChatStreamMode = "visitor" | "brainstorm";
+
 /**
  * POST /api/chat with SSE streaming. Parses event-stream by hand to avoid
  * the EventSource limitations (no body, no headers).
@@ -17,6 +19,7 @@ export async function streamChat(
     message: string;
     sessionId: string | null;
     history: { role: string; content: string }[];
+    mode?: ChatStreamMode;
     signal?: AbortSignal;
   },
   handlers: ChatStreamHandlers
@@ -28,6 +31,7 @@ export async function streamChat(
       message: args.message,
       session_id: args.sessionId,
       history: args.history,
+      mode: args.mode ?? "visitor",
     }),
     signal: args.signal,
   });
@@ -132,6 +136,30 @@ export async function submitContact(args: {
   });
   if (!res.ok) {
     return { ok: false, message: "didn't go through — try again later" };
+  }
+  return res.json();
+}
+
+export interface CharacterMeta {
+  name: string;
+  pronoun_subject: string;
+  pronoun_object: string;
+  pronoun_possessive: string;
+  voice_enabled: boolean;
+  modes: string[];
+}
+
+export async function fetchCharacter(): Promise<CharacterMeta> {
+  const res = await fetch("/api/character", { next: { revalidate: 60 } });
+  if (!res.ok) {
+    return {
+      name: "Iris",
+      pronoun_subject: "she",
+      pronoun_object: "her",
+      pronoun_possessive: "her",
+      voice_enabled: false,
+      modes: ["visitor", "brainstorm"],
+    };
   }
   return res.json();
 }

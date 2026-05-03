@@ -14,6 +14,8 @@ from fastapi.responses import StreamingResponse
 from prometheus_client import Counter, Histogram
 from pydantic import BaseModel, Field
 
+from typing import Literal
+
 from app.agents.memory import remember
 from app.agents.persona import stream_persona_reply
 from app.core.cache import rate_limit
@@ -32,6 +34,7 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     session_id: str | None = None
     history: list[dict[str, str]] = Field(default_factory=list, max_length=20)
+    mode: Literal["visitor", "brainstorm"] = "visitor"
 
 
 class ContactRequest(BaseModel):
@@ -119,7 +122,12 @@ async def chat(req: ChatRequest, request: Request) -> StreamingResponse:
         doc_ids: list[str] = []
 
         try:
-            async for ev in stream_persona_reply(req.message, history=req.history):
+            async for ev in stream_persona_reply(
+                req.message,
+                history=req.history,
+                mode=req.mode,
+                session_id=session_id,
+            ):
                 if ev["type"] == "context":
                     doc_ids = ev.get("doc_ids", [])
                     yield _sse("context", {"doc_ids": doc_ids, "doc_titles": ev.get("doc_titles", [])})

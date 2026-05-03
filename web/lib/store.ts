@@ -14,11 +14,14 @@ export interface ChatMessage {
   latencyMs?: number;
 }
 
+export type ChatMode = "visitor" | "brainstorm";
+
 interface ChatState {
   sessionId: string | null;
   messages: ChatMessage[];
   isStreaming: boolean;
   error: string | null;
+  mode: ChatMode;
 
   setSessionId: (id: string) => void;
   appendMessage: (msg: ChatMessage) => void;
@@ -26,6 +29,7 @@ interface ChatState {
   setMessageMeta: (id: string, meta: Partial<ChatMessage>) => void;
   setStreaming: (b: boolean) => void;
   setError: (e: string | null) => void;
+  setMode: (mode: ChatMode) => void;
   resetConversation: () => void;
 }
 
@@ -36,8 +40,10 @@ export const useChatStore = create<ChatState>()(
       messages: [],
       isStreaming: false,
       error: null,
+      mode: "visitor",
 
       setSessionId: (id) => set({ sessionId: id }),
+      setMode: (mode) => set({ mode }),
 
       appendMessage: (msg) =>
         set((s) => ({ messages: [...s.messages, msg] })),
@@ -62,7 +68,11 @@ export const useChatStore = create<ChatState>()(
     {
       name: "ryan-clone-chat",
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ sessionId: s.sessionId, messages: s.messages }),
+      partialize: (s) => ({
+        sessionId: s.sessionId,
+        messages: s.messages,
+        mode: s.mode,
+      }),
     }
   )
 );
