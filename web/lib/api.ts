@@ -199,9 +199,26 @@ export async function synthesizeAudio(text: string): Promise<Blob> {
     body: JSON.stringify({ text }),
   });
   if (!res.ok) {
-    throw new Error(`synthesize failed: ${res.status}`);
+    // Read JSON detail if present, fall back to text. The API now propagates
+    // upstream ElevenLabs errors with a useful detail string.
+    let msg = `synthesize failed (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.detail) msg = String(body.detail).slice(0, 240);
+    } catch {
+      try {
+        const text = await res.text();
+        if (text) msg = text.slice(0, 240);
+      } catch { /* ignore */ }
+    }
+    throw new Error(msg);
   }
-  return res.blob();
+  const blob = await res.blob();
+  // Guard against an empty body slipping through (just in case).
+  if (blob.size < 200) {
+    throw new Error("synthesize returned empty audio — check elevenlabs key + voice id");
+  }
+  return blob;
 }
 
 /** Non-streaming chat — collects the full reply, used by the voice flow

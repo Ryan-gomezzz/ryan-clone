@@ -153,26 +153,24 @@ export function Chat() {
           transition={{ duration: 0.6, ease: [0.2, 0.8, 0.2, 1] }}
           className="md:col-span-4 md:sticky md:top-32 md:self-start"
         >
-          <p className="eyebrow mb-4">
-            <span className="num-tag mr-2">/01</span>
-            chat
+          <p className="font-script text-3xl text-accent mb-2 leading-none">
+            Say hi to —
           </p>
-          <h2 className="font-editorial-tight text-4xl md:text-5xl mb-3">
-            Talk to{" "}
-            <span className="italic-display text-accent">{characterName}.</span>
+          <h2 className="font-editorial-tight text-4xl md:text-5xl mb-4">
+            <span className="italic-display text-accent">{characterName}</span>
           </h2>
           <p className="text-fg-muted text-[15px] leading-relaxed max-w-sm mb-6">
             {mode === "visitor" ? (
               <>
-                {characterName} is Ryan&apos;s inner voice — calm, technically
-                literate, grounded on a private corpus of his projects and
-                writing. She won&apos;t make things up.
+                She&apos;s the part of my thinking that talks. Knows my work
+                inside out. Won&apos;t pretend I&apos;ve done things I
+                haven&apos;t. Be casual — she is.
               </>
             ) : (
               <>
-                Brainstorm mode. {characterName} pushes back, surfaces
-                contradictions in your corpus, and asks the next question.
-                Use her as a thinking partner — she remembers prior sessions.
+                Brainstorm mode. Iris pushes back, names assumptions, asks
+                the next question instead of restating what you already know.
+                Sessions persist, so pick up threads later.
               </>
             )}
           </p>

@@ -22,19 +22,27 @@ export function ChatMessageView({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
-      className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}
+      className={cn(
+        "flex w-full items-end gap-3",
+        isUser ? "justify-end" : "justify-start"
+      )}
     >
+      {!isUser && (
+        <span className="shrink-0 w-7 h-7 rounded-full bg-bg-elev border border-accent-deep flex items-center justify-center mb-1">
+          <span className="font-editorial italic text-sm text-accent leading-none -mt-0.5">
+            {characterName.charAt(0).toUpperCase()}
+          </span>
+        </span>
+      )}
+
       <div
         className={cn(
-          "max-w-[92%] md:max-w-[88%] px-4 py-3 rounded-lg",
-          isUser
-            ? "bg-bg-soft border border-border text-fg"
-            : "text-fg"
+          "max-w-[85%] md:max-w-[78%]",
+          isUser ? "bubble bubble-user" : "bubble bubble-iris"
         )}
       >
         {!isUser && (
-          <div className="flex items-center gap-2 mb-2 eyebrow flex-wrap">
-            <span className="w-1 h-1 rounded-full bg-accent" />
+          <div className="flex items-center gap-2 mb-1.5 eyebrow flex-wrap opacity-80">
             <span>{characterName.toLowerCase()}</span>
             {message.latencyMs ? (
               <span className="opacity-50">· {message.latencyMs}ms</span>
@@ -42,11 +50,10 @@ export function ChatMessageView({
             {message.retrievedDocs && message.retrievedDocs.length > 0 && (
               <>
                 <span className="opacity-30">·</span>
-                <span className="opacity-50">grounded on</span>
                 {message.retrievedDocs.slice(0, 3).map((d) => (
                   <span
                     key={d}
-                    className="px-1.5 py-0.5 rounded border border-border text-fg-muted lowercase opacity-70 hover:opacity-100 hover:border-accent-deep transition-all"
+                    className="px-1.5 py-0.5 rounded border border-accent-deep/40 text-fg-muted lowercase opacity-70"
                   >
                     {d.replace("projects/", "")}
                   </span>
@@ -55,7 +62,7 @@ export function ChatMessageView({
             )}
           </div>
         )}
-        <div className="message-prose">
+        <div className="message-prose text-[15px]">
           {isUser ? (
             <p className="whitespace-pre-wrap">{message.content}</p>
           ) : (
@@ -76,12 +83,17 @@ export function ChatMessageView({
           )}
         </div>
       </div>
+
+      {isUser && (
+        <span className="shrink-0 w-7 h-7 rounded-full bg-bg-soft border border-border flex items-center justify-center mb-1">
+          <span className="font-mono text-[10px] text-fg-muted">you</span>
+        </span>
+      )}
     </motion.div>
   );
 }
 
 function ThinkingState() {
-  // Cycle through realistic descriptions of what's happening server-side.
   const stages = [
     "embedding query",
     "searching corpus",

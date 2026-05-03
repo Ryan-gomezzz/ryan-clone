@@ -7,6 +7,7 @@ import { MouseGlow } from "@/components/ui/mouse-glow";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { Konami } from "@/components/ui/konami";
 import { Nav } from "@/components/ui/nav";
+import { IrisPresence } from "@/components/ui/iris-presence";
 import { Providers } from "@/components/providers";
 import { PageTransition } from "@/components/page-transition";
 
@@ -56,6 +57,7 @@ export default function RootLayout({
           <main className="relative z-10">
             <PageTransition>{children}</PageTransition>
           </main>
+          <IrisPresence />
           <Toaster
             theme="dark"
             position="bottom-right"

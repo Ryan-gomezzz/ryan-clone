@@ -2,33 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Caveat:wght@400;500;600&display=swap");
 
 :root {
-  /* Cooler, more cinematic palette — deep slate-blue blacks with a single
-     copper accent. Reads like a photographer's portfolio, not a SaaS dashboard. */
-  --bg:           #07080b;   /* near-black with a hint of blue */
-  --bg-elev:      #0e1015;   /* one step up for cards / inputs */
-  --bg-soft:      #14171d;   /* hover / subtle surfaces */
-  --fg:           #ecedef;   /* clean off-white */
-  --fg-muted:     #7c8089;   /* secondary text */
-  --fg-subtle:    #4a4e57;   /* tertiary / labels */
+  /* Warmer palette — paper-warm near-black with a copper accent. The
+     undertone is brown-warm now instead of blue-cool; reads more "lit
+     room at night" than "design studio at noon". */
+  --bg:           #0c0a08;   /* warm near-black */
+  --bg-elev:      #14110e;   /* one step up for cards / inputs */
+  --bg-soft:      #1a1612;   /* hover / subtle surfaces */
+  --fg:           #f0ebe2;   /* warm off-white, slight cream */
+  --fg-muted:     #8a8278;   /* secondary text, warmer */
+  --fg-subtle:    #524a40;   /* tertiary / labels */
 
-  --accent:       #d97757;   /* warm copper — Anthropic-adjacent */
-  --accent-hot:   #ee8b6c;
-  --accent-deep:  #6b3a28;
-  --accent-glow:  rgba(217, 119, 87, 0.18);
+  --accent:       #e08359;   /* warmer copper, slightly more orange */
+  --accent-hot:   #f29774;
+  --accent-deep:  #6e3d28;
+  --accent-glow:  rgba(224, 131, 89, 0.20);
 
-  --border:       #1c1f26;
-  --border-hover: #2a2e37;
+  --border:       #21201e;
+  --border-hover: #2e2c28;
   --danger:       #d35a4c;
-  --success:      #6b9b7a;
+  --success:      #7ba87b;
 
-  --grain-opacity: 0.035;
+  --grain-opacity: 0.04;
 
-  --font-serif: "Fraunces", "Instrument Serif", Georgia, serif;
-  --font-sans:  "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-mono:  "Geist Mono", ui-monospace, "JetBrains Mono", monospace;
+  --font-serif:  "Fraunces", "Instrument Serif", Georgia, serif;
+  --font-sans:   "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:   "Geist Mono", ui-monospace, "JetBrains Mono", monospace;
+  --font-script: "Caveat", "Comic Sans MS", cursive;
 }
 
 * {
@@ -46,11 +48,11 @@ body {
 }
 
 body {
-  /* Layered ambient background — soft copper aurora top-left, deep navy
-     fade bottom-right. No vignette ring; just atmospheric gradients. */
+  /* Warm ambient layers — soft copper glow top-left, ember warmth bottom.
+     Reads like a desk lamp in a room at night. */
   background:
-    radial-gradient(ellipse 1200px 800px at 15% 0%, rgba(217, 119, 87, 0.06), transparent 60%),
-    radial-gradient(ellipse 900px 700px at 85% 100%, rgba(60, 80, 120, 0.05), transparent 70%),
+    radial-gradient(ellipse 1100px 700px at 12% 0%, rgba(224, 131, 89, 0.07), transparent 60%),
+    radial-gradient(ellipse 900px 700px at 90% 100%, rgba(110, 61, 40, 0.05), transparent 70%),
     var(--bg);
   background-attachment: fixed;
   min-height: 100vh;
@@ -117,6 +119,43 @@ body {
 
 .eyebrow-accent {
   color: var(--accent);
+}
+
+/* Handwritten — used sparingly for personal touches */
+.font-script {
+  font-family: var(--font-script);
+  font-weight: 500;
+  letter-spacing: 0;
+  font-feature-settings: normal;
+}
+
+.script-tag {
+  font-family: var(--font-script);
+  font-size: 1.5rem;
+  color: var(--accent);
+  line-height: 1;
+}
+
+/* Speech bubble — used in chat */
+.bubble {
+  position: relative;
+  padding: 0.85rem 1.1rem;
+  border-radius: 18px;
+  line-height: 1.55;
+}
+
+.bubble-user {
+  background: var(--bg-soft);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-bottom-right-radius: 4px;
+}
+
+.bubble-iris {
+  background: linear-gradient(180deg, rgba(224,131,89,0.10), rgba(224,131,89,0.04));
+  border: 1px solid rgba(224,131,89,0.25);
+  color: var(--fg);
+  border-bottom-left-radius: 4px;
 }
 
 /* ── Page transitions ───────────────────────────────────────────────── */
