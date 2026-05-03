@@ -3,8 +3,12 @@ import "../styles/globals.css";
 import "highlight.js/styles/github-dark-dimmed.css";
 import { Toaster } from "sonner";
 import { Grain } from "@/components/ui/grain";
+import { MouseGlow } from "@/components/ui/mouse-glow";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
+import { Konami } from "@/components/ui/konami";
 import { Nav } from "@/components/ui/nav";
 import { Providers } from "@/components/providers";
+import { PageTransition } from "@/components/page-transition";
 
 export const metadata: Metadata = {
   title: "Ryan Gomez — Founder & CTO, SOYL AI",
@@ -29,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0908",
+  themeColor: "#07080b",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -44,9 +48,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="bg-bg text-fg antialiased">
         <Providers>
+          <ScrollProgress />
+          <MouseGlow />
           <Grain />
           <Nav />
-          <main className="relative z-10">{children}</main>
+          <Konami />
+          <main className="relative z-10">
+            <PageTransition>{children}</PageTransition>
+          </main>
           <Toaster
             theme="dark"
             position="bottom-right"
