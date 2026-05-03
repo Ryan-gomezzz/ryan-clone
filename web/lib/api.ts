@@ -167,6 +167,7 @@ export async function fetchCharacter(): Promise<CharacterMeta> {
 export async function fetchVoiceStatus(): Promise<{
   ready: boolean;
   reason: string | null;
+  mode?: string;
 }> {
   try {
     const res = await fetch("/api/voice/status");
@@ -175,4 +176,53 @@ export async function fetchVoiceStatus(): Promise<{
   } catch {
     return { ready: false, reason: "voice service unreachable" };
   }
+}
+
+export async function transcribeAudio(blob: Blob): Promise<{
+  transcript: string;
+  confidence: number;
+}> {
+  const fd = new FormData();
+  fd.append("audio", blob, "recording.webm");
+  const res = await fetch("/api/voice/transcribe", { method: "POST", body: fd });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`transcribe failed: ${res.status} ${detail}`);
+  }
+  return res.json();
+}
+
+export async function synthesizeAudio(text: string): Promise<Blob> {
+  const res = await fetch("/api/voice/synthesize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) {
+    throw new Error(`synthesize failed: ${res.status}`);
+  }
+  return res.blob();
+}
+
+/** Non-streaming chat — collects the full reply, used by the voice flow
+ *  where we need the whole text before sending to TTS. */
+export async function chatOnce(
+  message: string,
+  mode: ChatStreamMode,
+  sessionId: string | null
+): Promise<{ text: string; sessionId: string | null }> {
+  let collected = "";
+  let sid = sessionId;
+  await streamChat(
+    { message, sessionId, history: [], mode },
+    {
+      onSession: (id) => {
+        sid = id;
+      },
+      onDelta: (chunk) => {
+        collected += chunk;
+      },
+    }
+  );
+  return { text: collected, sessionId: sid };
 }
