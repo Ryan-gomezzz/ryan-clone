@@ -31,19 +31,31 @@ router = APIRouter(prefix="/voice", tags=["voice"])
 def _voice_keys_ready() -> tuple[bool, str | None]:
     if not settings.deepgram_api_key:
         return False, "DEEPGRAM_API_KEY not set"
-    if not settings.elevenlabs_api_key:
-        return False, "ELEVENLABS_API_KEY not set"
-    if not settings.elevenlabs_voice_id:
-        return False, "ELEVENLABS_VOICE_ID not set"
     if not settings.voice_enabled:
         return False, "VOICE_ENABLED is false"
+    provider = (settings.tts_provider or "openai").lower()
+    if provider == "openai":
+        if not settings.openai_api_key:
+            return False, "OPENAI_API_KEY not set (TTS_PROVIDER=openai)"
+    elif provider == "elevenlabs":
+        if not settings.elevenlabs_api_key:
+            return False, "ELEVENLABS_API_KEY not set"
+        if not settings.elevenlabs_voice_id:
+            return False, "ELEVENLABS_VOICE_ID not set"
+    else:
+        return False, f"unknown TTS_PROVIDER '{provider}' — use 'openai' or 'elevenlabs'"
     return True, None
 
 
 @router.get("/status")
 async def status() -> dict:
     ready, reason = _voice_keys_ready()
-    return {"ready": ready, "reason": reason, "mode": "press-to-talk"}
+    return {
+        "ready": ready,
+        "reason": reason,
+        "mode": "press-to-talk",
+        "tts_provider": settings.tts_provider,
+    }
 
 
 # ── Transcribe (Deepgram) ──────────────────────────────────────────────────
@@ -106,29 +118,48 @@ async def transcribe(audio: UploadFile = File(...)) -> dict:
         raise HTTPException(status_code=502, detail="transcription failed") from exc
 
 
-# ── Synthesize (ElevenLabs) ────────────────────────────────────────────────
+# ── Synthesize (provider-routed: OpenAI default, ElevenLabs optional) ─────
 
 
 class SynthRequest(BaseModel):
     text: str = Field(min_length=1, max_length=4000)
 
 
-@router.post("/synthesize")
-async def synthesize(req: SynthRequest):
-    """Stream MP3 audio for the given text using ElevenLabs."""
-    ready, reason = _voice_keys_ready()
-    if not ready:
-        raise HTTPException(status_code=503, detail=reason)
+async def _tts_openai(text: str) -> bytes:
+    """Hit OpenAI's /v1/audio/speech. Returns the full MP3 bytes."""
+    url = "https://api.openai.com/v1/audio/speech"
+    headers = {
+        "Authorization": f"Bearer {settings.openai_api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": settings.openai_tts_model,
+        "voice": settings.openai_tts_voice,
+        "input": text,
+        "response_format": "mp3",
+    }
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(url, json=payload, headers=headers)
+    if resp.status_code != 200:
+        detail = resp.text[:300] if resp.text else f"openai tts {resp.status_code}"
+        log.warning("openai_tts_failed", status=resp.status_code, body=detail)
+        raise HTTPException(
+            status_code=502, detail=f"openai tts {resp.status_code}: {detail}"
+        )
+    return resp.content
 
+
+async def _tts_elevenlabs(text: str) -> bytes:
+    """Hit ElevenLabs streaming endpoint. Returns the full MP3 bytes."""
     voice_id = settings.elevenlabs_voice_id
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     headers = {
         "xi-api-key": settings.elevenlabs_api_key,
         "Content-Type": "application/json",
         "Accept": "audio/mpeg",
     }
     payload = {
-        "text": req.text,
+        "text": text,
         "model_id": settings.elevenlabs_model,
         "voice_settings": {
             "stability": 0.45,
@@ -137,31 +168,46 @@ async def synthesize(req: SynthRequest):
             "use_speaker_boost": True,
         },
     }
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(url, json=payload, headers=headers)
+    if resp.status_code != 200:
+        detail = resp.text[:300] if resp.text else f"elevenlabs {resp.status_code}"
+        log.warning("elevenlabs_failed", status=resp.status_code, body=detail)
+        raise HTTPException(
+            status_code=502, detail=f"elevenlabs {resp.status_code}: {detail}"
+        )
+    return resp.content
 
-    # Probe first so we can fail fast with a real status code rather than
-    # silently returning a 0-byte 200 from inside the streaming generator.
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        probe = await client.post(url, json=payload, headers=headers)
-        if probe.status_code != 200:
-            detail = probe.text[:300] if probe.text else f"elevenlabs {probe.status_code}"
-            log.warning(
-                "elevenlabs_failed", status=probe.status_code, body=detail
-            )
-            raise HTTPException(
-                status_code=502,
-                detail=f"elevenlabs {probe.status_code}: {detail}",
-            )
-        first_chunk = probe.content
+
+@router.post("/synthesize")
+async def synthesize(req: SynthRequest):
+    """Synthesize audio for the given text using the active TTS provider."""
+    ready, reason = _voice_keys_ready()
+    if not ready:
+        raise HTTPException(status_code=503, detail=reason)
+
+    provider = (settings.tts_provider or "openai").lower()
+    log.info("tts_call", provider=provider, chars=len(req.text))
+
+    if provider == "elevenlabs":
+        audio = await _tts_elevenlabs(req.text)
+    else:
+        audio = await _tts_openai(req.text)
 
     async def stream_audio():
-        # Yield what we already fetched, then continue streaming the rest.
-        if first_chunk:
-            yield first_chunk
+        # Send in 8KB chunks so the browser can start decoding earlier.
+        CHUNK = 8192
+        for i in range(0, len(audio), CHUNK):
+            yield audio[i : i + CHUNK]
 
     return StreamingResponse(
         stream_audio(),
         media_type="audio/mpeg",
-        headers={"Cache-Control": "no-cache"},
+        headers={
+            "Cache-Control": "no-cache",
+            "Content-Length": str(len(audio)),
+            "X-TTS-Provider": provider,
+        },
     )
 
 

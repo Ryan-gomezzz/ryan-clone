@@ -87,6 +87,16 @@ class Settings(BaseSettings):
     elevenlabs_api_key: str = Field(default="")
     elevenlabs_voice_id: str = Field(default="")
     elevenlabs_model: str = "eleven_flash_v2_5"
+
+    # TTS routing — "openai" (default; uses OPENAI_API_KEY) or "elevenlabs".
+    # OpenAI is the production default because ElevenLabs free tier blocks
+    # data-center IPs (Railway, Hetzner, etc) as suspected proxy traffic.
+    tts_provider: str = Field(default="openai")
+    openai_tts_model: str = Field(default="tts-1")
+    openai_tts_voice: str = Field(
+        default="nova",
+        description="nova | shimmer | sage | onyx | echo | alloy | fable",
+    )
     voice_enabled: bool = False
 
     # ── Memory (Phase 3) ────────────────────────────────────────────────────

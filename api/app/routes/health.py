@@ -41,6 +41,8 @@ async def healthz() -> dict:
         "openai_key_configured": bool(settings.openai_api_key),
         "anthropic_key_configured": bool(settings.anthropic_api_key),
         "voice_enabled": settings.voice_enabled,
+        "tts_provider": settings.tts_provider,
+        "openai_tts_voice": settings.openai_tts_voice,
         "voice_id_configured": bool(settings.elevenlabs_voice_id),
         "mem0_enabled": settings.mem0_enabled,
         "environment": settings.environment,
